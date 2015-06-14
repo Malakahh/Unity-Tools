@@ -17,21 +17,10 @@ public class ObjectPool : UnityEngine.MonoBehaviour
     {
         System.Type t = typeof(T);
 
-        if (pools.ContainsKey(t))
+        if (PoolContainsKey(t))
         {
             MetaEntry<T> entry = (MetaEntry<T>)pools[t];
             entry.Pool.Enqueue(obj);
-        }
-        else
-        {
-            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
-            {
-                Debug.LogError(ErrorStrings.OBJECT_TYPE_NOT_FOUND);
-            }
-            else
-            {
-                throw new ObjectPoolException(ErrorStrings.OBJECT_TYPE_NOT_FOUND, t);
-            }
         }
     }
 
@@ -173,21 +162,10 @@ public class ObjectPool : UnityEngine.MonoBehaviour
             }
         }
 
-        if (pools.ContainsKey(t))
+        if (PoolContainsKey(t))
         {
             MetaEntry<T> entry = (MetaEntry<T>)pools[t];
             entry.LowerThreshold = threshold;
-        }
-        else
-        {
-            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
-            {
-                Debug.LogError(ErrorStrings.OBJECT_TYPE_NOT_FOUND);
-            }
-            else
-            {
-                throw new ObjectPoolException(ErrorStrings.OBJECT_TYPE_NOT_FOUND, t);
-            }
         }
     }
 
@@ -200,21 +178,10 @@ public class ObjectPool : UnityEngine.MonoBehaviour
     {
         System.Type t = typeof(T);
 
-        if (pools.ContainsKey(t))
+        if (PoolContainsKey(t))
         {
             MetaEntry<T> entry = (MetaEntry<T>)pools[t];
             return entry.LowerThreshold;
-        }
-        else
-        {
-            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
-            {
-                Debug.LogError(ErrorStrings.OBJECT_TYPE_NOT_FOUND);
-            }
-            else
-            {
-                throw new ObjectPoolException(ErrorStrings.OBJECT_TYPE_NOT_FOUND, t);
-            }
         }
 
         return -1;
@@ -229,12 +196,20 @@ public class ObjectPool : UnityEngine.MonoBehaviour
     {
         System.Type t = typeof(T);
 
-        if (pools.ContainsKey(t))
+        if (PoolContainsKey(t))
         {
             MetaEntry<T> entry = (MetaEntry<T>)pools[t];
             return entry.InstanceCountTotal;
         }
-        else
+
+        return -1;
+    }
+
+    private static bool PoolContainsKey(System.Type t)
+    {
+        bool ret = pools.ContainsKey(t);
+
+        if (!ret)
         {
             if (ErrorLevel == ObjectPoolErrorLevel.LogError)
             {
@@ -246,7 +221,7 @@ public class ObjectPool : UnityEngine.MonoBehaviour
             }
         }
 
-        return -1;
+        return ret;
     }
 
     abstract class BaseMetaEntry {};
