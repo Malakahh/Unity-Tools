@@ -60,12 +60,15 @@ public class ObjectPool : UnityEngine.MonoBehaviour
            
             //Double the number of entries
             entry.LeftToInstantiate = entry.InstanceCountTotal;
-            
-            if (entry.asyncInst == null)
+
+            //Instantiate async if we aren't already
+            if (entry.asyncInst == null) 
             {
                 entry.asyncInst = Instance.StartCoroutine(AsyncInstantiation<T>(entry));
             }
-            else
+
+            //We need an instance immediatly
+            if (entry.Pool.Count == 0)
             {
                 InstantiateObject<T>(entry);
             }
@@ -114,9 +117,8 @@ public class ObjectPool : UnityEngine.MonoBehaviour
     {
         System.Type t = typeof(T);
 
-        UnityEngine.Object[] arr = UnityEngine.Resources.LoadAll("", t);
-
-        Debug.Log("hi: " + arr.Length);
+        //UnityEngine.Object[] arr = UnityEngine.Resources.LoadAll("", t);
+        UnityEngine.Object[] arr = UnityEngine.Resources.FindObjectsOfTypeAll(t);
 
         //Error if we didn't find anything
         if (arr == null || arr.Length == 0)
@@ -149,12 +151,10 @@ public class ObjectPool : UnityEngine.MonoBehaviour
         T ret;
         if (TryCast<T>(arr[0], out ret))
         {
-            Debug.Log("Hello");
             return ret;
         }
         else
         {
-            Debug.Log("Hello2");
             return default(T);
         }
     }
