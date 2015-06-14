@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 public class ObjectPoolUnitTest : MonoBehaviour
 {
+    public GameObject GO;
 
 	// Use this for initialization
 	void Start () {
@@ -17,6 +18,8 @@ public class ObjectPoolUnitTest : MonoBehaviour
         bool thresholdIncreased2 = ThresholdIncreased2();
         bool release1 = Release1();
         bool release2 = Release2();
+        bool gameObjectTest1 = GameObjectTest1();
+        bool gameObjectTest2 = GameObjectTest2();
 
         bool res = defaultConstructorObject && 
             defaultConstructorObjectMany &&
@@ -25,7 +28,9 @@ public class ObjectPoolUnitTest : MonoBehaviour
             thresholdIncreased1 &&
             thresholdIncreased2 &&
             release1 &&
-            release2;
+            release2 &&
+            gameObjectTest1 &&
+            gameObjectTest2;
         Debug.Log("*** Test completed with result: " + res);
         #endif
 	}
@@ -154,6 +159,29 @@ public class ObjectPoolUnitTest : MonoBehaviour
         bool res = ObjectPool.GetInstanceCountTotal<ReleaseDerivative1>() != expected;
         Debug.Log("Release2: " + res);
         return res;
+    }
+
+    bool GameObjectTest1()
+    {
+        ObjectPoolGameObjectTestScript obj = ObjectPool.Acquire<ObjectPoolGameObjectTestScript>();
+        bool ret = obj != null && obj.gameObject != null;
+        Debug.Log("GameObjectTest1: " + ret);
+        return ret;
+    }
+
+    bool GameObjectTest2()
+    {
+        ObjectPoolGameObjectTestScript obj = ObjectPool.Acquire<ObjectPoolGameObjectTestScript>();
+        bool ret = true;
+        for (int i = 0; i < 20; i++)
+        {
+            if (obj == null || obj.gameObject == null)
+            {
+                ret = false;
+            }
+        }
+        Debug.Log("GameObjectTest2: " + ret);
+        return ret;
     }
 
     class TestDataClass
