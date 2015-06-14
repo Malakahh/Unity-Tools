@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using Debug = UnityEngine.Debug;
 
 public class ObjectPool : UnityEngine.MonoBehaviour
@@ -6,7 +7,15 @@ public class ObjectPool : UnityEngine.MonoBehaviour
     public enum ObjectPoolErrorLevel {LogError, Exceptions}
 
     public static ObjectPoolErrorLevel ErrorLevel = ObjectPoolErrorLevel.LogError;
+    
     static Dictionary<System.Type, BaseMetaEntry> pools = new Dictionary<System.Type, BaseMetaEntry>();
+    static ObjectPool Instance;
+
+    void Awake()
+    {
+        if (Instance == null)
+            Instance = this;
+    }
 
     /// <summary>
     /// Releases an object back into the pool.
@@ -19,8 +28,7 @@ public class ObjectPool : UnityEngine.MonoBehaviour
 
         if (PoolContainsKey(t))
         {
-            MetaEntry<T> entry = (MetaEntry<T>)pools[t];
-            entry.Pool.Enqueue(obj);
+            ((MetaEntry<T>)pools[t]).Pool.Enqueue(obj);
         }
     }
 
@@ -38,42 +46,66 @@ public class ObjectPool : UnityEngine.MonoBehaviour
         if (!pools.ContainsKey(t))
         {
             entry = new MetaEntry<T>();
-
-            if (t.IsSubclassOf(typeof(UnityEngine.Object)))
-            {
-                entry.Pool.Enqueue(InstantiateUnityObject<T>());
-            }
-            else
-            {
-                entry.Pool.Enqueue(new T());
-            }
-
+            InstantiateObject<T>(entry);
             pools.Add(t, entry);
         }
         else
         {
             entry = (MetaEntry<T>)pools[t];
         }
-
+        
         //Below threshold, make more instances
         if (entry.Pool.Count <= entry.LowerThreshold)
         {
+           
             //Double the number of entries
-            for (int i = 0; i < entry.InstanceCountTotal; i++)
+            entry.LeftToInstantiate = entry.InstanceCountTotal;
+
+            //Instantiate async if we aren't already
+            if (entry.asyncInst == null) 
             {
-                if (t.IsSubclassOf(typeof(UnityEngine.Object)))
-                {
-                    entry.Pool.Enqueue(InstantiateUnityObject<T>());
-                }
-                else
-                {
-                    entry.Pool.Enqueue(new T());
-                }
+                entry.asyncInst = Instance.StartCoroutine(AsyncInstantiation<T>(entry));
             }
-            entry.InstanceCountTotal *= 2;
+
+            //We need an instance immediatly
+            if (entry.Pool.Count == 0)
+            {
+                InstantiateObject<T>(entry);
+            }
         }
 
         return entry.Pool.Dequeue();
+    }
+
+    private static void InstantiateObject<T>(MetaEntry<T> entry) where T : new()
+    {
+        System.Type t = typeof(T);
+        System.Type objectType = typeof(UnityEngine.Object);
+        if (t.IsSubclassOf(objectType))
+        {
+            entry.Pool.Enqueue(InstantiateUnityObject<T>());
+        }
+        else
+        {
+            entry.Pool.Enqueue(new T());
+        }
+        
+        entry.InstanceCountTotal++;
+
+        if (entry.LeftToInstantiate > 0)
+            entry.LeftToInstantiate--;
+    }
+
+    private static IEnumerator AsyncInstantiation<T>(MetaEntry<T> entry) where T : new()
+    {
+        while (entry.LeftToInstantiate > 0)
+        {
+            InstantiateObject<T>(entry);
+            
+            yield return new UnityEngine.WaitForEndOfFrame();
+        }
+
+        entry.asyncInst = null;
     }
 
     /// <summary>
@@ -85,12 +117,11 @@ public class ObjectPool : UnityEngine.MonoBehaviour
     {
         System.Type t = typeof(T);
 
-        UnityEngine.Object[] arr;
-
-        arr = UnityEngine.Resources.LoadAll("", t);
+        //UnityEngine.Object[] arr = UnityEngine.Resources.LoadAll("", t);
+        UnityEngine.Object[] arr = UnityEngine.Resources.FindObjectsOfTypeAll(t);
 
         //Error if we didn't find anything
-        if (arr == null)
+        if (arr == null || arr.Length == 0)
         {
             if (ErrorLevel == ObjectPoolErrorLevel.LogError)
             {
@@ -128,7 +159,7 @@ public class ObjectPool : UnityEngine.MonoBehaviour
         }
     }
 
-    public static bool TryCast<T>(object obj, out T result)
+    private static bool TryCast<T>(object obj, out T result)
     {
         if (obj is T)
         {
@@ -228,8 +259,10 @@ public class ObjectPool : UnityEngine.MonoBehaviour
     class MetaEntry<T> : BaseMetaEntry
     {
         public Queue<T> Pool = new Queue<T>();
-        public int InstanceCountTotal = 1;
+        public int InstanceCountTotal = 0;
         public int LowerThreshold = 1;
+        public int LeftToInstantiate = 0;
+        public UnityEngine.Coroutine asyncInst;
     }
 
     public class ObjectPoolException : System.Exception
@@ -244,10 +277,10 @@ public class ObjectPool : UnityEngine.MonoBehaviour
 
     private static class ErrorStrings
     {
-        public  const string OBJECT_POOL_ERROR = "Object Pool ERROR";
-        public  const string OBJECT_TYPE_NOT_FOUND = OBJECT_POOL_ERROR + ": Object type not in pool.";
-        public  const string OBJECT_TYPE_MUST_BE_UNIQUE = OBJECT_POOL_ERROR + ": Object type must be unique.";
-        public  const string RESOURCE_NOT_FOUND = OBJECT_POOL_ERROR + ": Resource not found.";
-        public  const string THRESHOLD_TOO_LOW = OBJECT_POOL_ERROR + ": Threshold must be >= 1";
+        public const string OBJECT_POOL_ERROR = "Object Pool ERROR";
+        public const string OBJECT_TYPE_NOT_FOUND = OBJECT_POOL_ERROR + ": Object type not in pool.";
+        public const string OBJECT_TYPE_MUST_BE_UNIQUE = OBJECT_POOL_ERROR + ": Object type must be unique.";
+        public const string RESOURCE_NOT_FOUND = OBJECT_POOL_ERROR + ": Resource not found.";
+        public const string THRESHOLD_TOO_LOW = OBJECT_POOL_ERROR + ": Threshold must be >= 1";
     }
 }
