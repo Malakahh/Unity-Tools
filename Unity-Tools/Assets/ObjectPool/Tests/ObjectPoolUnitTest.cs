@@ -147,7 +147,7 @@ public class ObjectPoolUnitTest : MonoBehaviour
             yield return new WaitForEndOfFrame();
         }
 
-        bool thresholdDefaultSuccess2 = ObjectPool.GetInstanceCountTotal<ThresholdDerivativeDefaultSuccess2>() == expected;
+        thresholdDefaultSuccess2 = ObjectPool.GetInstanceCountTotal<ThresholdDerivativeDefaultSuccess2>() == expected;
         Debug.Log("ThresholdDefaultSuccess2: " + thresholdDefaultSuccess2);
 
         rotThresholdDefaultSuccess2 = null;
@@ -160,7 +160,7 @@ public class ObjectPoolUnitTest : MonoBehaviour
         yield return new WaitForEndOfFrame();
         ObjectPool.SetLowerInstantiationThreshold<ThresholdDerivativeIncreased1>(2);
 
-        for (int i = 0; i < 13; i++)
+        for (int i = 0; i < 14; i++)
         {
             ObjectPool.Acquire<ThresholdDerivativeIncreased1>();
             yield return new WaitForEndOfFrame();
@@ -179,7 +179,7 @@ public class ObjectPoolUnitTest : MonoBehaviour
         yield return new WaitForEndOfFrame();
         ObjectPool.SetLowerInstantiationThreshold<ThresholdDerivativeIncreased2>(2);
 
-        for (int i = 0; i < 14; i++)
+        for (int i = 0; i < 15; i++)
         {
             ObjectPool.Acquire<ThresholdDerivativeIncreased2>();
             yield return new WaitForEndOfFrame();
@@ -207,8 +207,8 @@ public class ObjectPoolUnitTest : MonoBehaviour
         ObjectPool.Acquire<ReleaseDerivative1>();
         yield return new WaitForEndOfFrame();
 
-        bool released1 = ObjectPool.GetInstanceCountTotal<ReleaseDerivative1>() == expected;
-        Debug.Log("Release1: " + released1);
+        release1 = ObjectPool.GetInstanceCountTotal<ReleaseDerivative1>() == expected;
+        Debug.Log("Release1: " + release1);
 
         rotRelease1 = null;
     }
@@ -217,6 +217,7 @@ public class ObjectPoolUnitTest : MonoBehaviour
     {
         int expected = 16;
         ReleaseDerivative2 obj = ObjectPool.Acquire<ReleaseDerivative2>();
+        yield return new WaitForEndOfFrame();
         ObjectPool.SetLowerInstantiationThreshold<ReleaseDerivative2>(2);
 
         for (int i = 0; i < 14; i++)
@@ -229,7 +230,7 @@ public class ObjectPoolUnitTest : MonoBehaviour
         ObjectPool.Acquire<ReleaseDerivative2>();
         yield return new WaitForEndOfFrame();
 
-        bool release2 = ObjectPool.GetInstanceCountTotal<ReleaseDerivative2>() != expected;
+        release2 = ObjectPool.GetInstanceCountTotal<ReleaseDerivative2>() != expected;
         Debug.Log("Release2: " + release2);
 
         rotRelease2 = null;
@@ -248,7 +249,7 @@ public class ObjectPoolUnitTest : MonoBehaviour
 
     IEnumerator GameObjectTest2()
     {
-        bool gameObjectTest2 = true;
+        gameObjectTest2 = true;
         for (int i = 0; i < 20; i++)
         {
             ObjectPoolGameObjectTestScript obj = ObjectPool.Acquire<ObjectPoolGameObjectTestScript>();

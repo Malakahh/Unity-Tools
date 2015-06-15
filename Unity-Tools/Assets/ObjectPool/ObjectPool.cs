@@ -57,13 +57,16 @@ public class ObjectPool : UnityEngine.MonoBehaviour
         //Below threshold, make more instances
         if (entry.Pool.Count <= entry.LowerThreshold)
         {
-           
-            //Double the number of entries
-            entry.LeftToInstantiate = entry.InstanceCountTotal;
-
             //Instantiate async if we aren't already
             if (entry.asyncInst == null) 
             {
+
+                //Double the number of entries
+                entry.LeftToInstantiate = entry.InstanceCountTotal;
+                entry.InstanceCountTotal *= 2;
+                //Debug.Log("Starting async - total: " + entry.InstanceCountTotal + " left: " + entry.LeftToInstantiate);
+
+                //Start async instantiation
                 entry.asyncInst = Instance.StartCoroutine(AsyncInstantiation<T>(entry));
             }
 
@@ -74,14 +77,13 @@ public class ObjectPool : UnityEngine.MonoBehaviour
             }
         }
 
+        //Debug.Log("Pool Count: " + entry.Pool.Count);
         return entry.Pool.Dequeue();
     }
 
     private static void InstantiateObject<T>(MetaEntry<T> entry) where T : new()
     {
-        System.Type t = typeof(T);
-        System.Type objectType = typeof(UnityEngine.Object);
-        if (t.IsSubclassOf(objectType))
+        if (typeof(T).IsSubclassOf(typeof(UnityEngine.Object)))
         {
             entry.Pool.Enqueue(InstantiateUnityObject<T>());
         }
@@ -89,8 +91,6 @@ public class ObjectPool : UnityEngine.MonoBehaviour
         {
             entry.Pool.Enqueue(new T());
         }
-        
-        entry.InstanceCountTotal++;
 
         if (entry.LeftToInstantiate > 0)
             entry.LeftToInstantiate--;
@@ -117,8 +117,8 @@ public class ObjectPool : UnityEngine.MonoBehaviour
     {
         System.Type t = typeof(T);
 
-        //UnityEngine.Object[] arr = UnityEngine.Resources.LoadAll("", t);
-        UnityEngine.Object[] arr = UnityEngine.Resources.FindObjectsOfTypeAll(t);
+        UnityEngine.Object[] arr = UnityEngine.Resources.LoadAll("", t);
+        //UnityEngine.Object[] arr = UnityEngine.Resources.FindObjectsOfTypeAll(t);
 
         //Error if we didn't find anything
         if (arr == null || arr.Length == 0)
@@ -259,7 +259,7 @@ public class ObjectPool : UnityEngine.MonoBehaviour
     class MetaEntry<T> : BaseMetaEntry
     {
         public Queue<T> Pool = new Queue<T>();
-        public int InstanceCountTotal = 0;
+        public int InstanceCountTotal = 1;
         public int LowerThreshold = 1;
         public int LeftToInstantiate = 0;
         public UnityEngine.Coroutine asyncInst;
