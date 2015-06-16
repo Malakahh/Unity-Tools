@@ -43,7 +43,7 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
 
         MetaEntry<T> entry;
 
-        if (!pools.ContainsKey(t))
+        if (!pools.ContainsKey(t)) //Not using PoolContainsKey, as this is first instantiation
         {
             entry = new MetaEntry<T>();
             InstantiateObject<T>(entry);
@@ -158,7 +158,6 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
         }
         else
         {
-            Debug.Log("I'm called, lol");
             toCast = Instantiate((UnityEngine.Object)obj);
         }
 
