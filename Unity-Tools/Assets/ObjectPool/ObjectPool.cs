@@ -68,8 +68,8 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
                 entry.asyncInst = Instance.StartCoroutine(AsyncInstantiation<T>(entry));
             }
 
-            //We need an instance immediatly
-            if (entry.Pool.Count == 0)
+            //We need an instance immediatly, otherwise we will run out
+            if (entry.Pool.Count <= 1)
             {
                 InstantiateObject<T>(entry);
             }
@@ -82,7 +82,14 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
     {
         if (typeof(T).IsSubclassOf(typeof(UnityEngine.Object)))
         {
-            entry.Pool.Enqueue(InstantiateUnityObject<T>());
+            if (entry.Pool.Count == 0)
+            {
+                entry.Pool.Enqueue(InstantiateUnityObject<T>());
+            }
+            else
+            {
+                entry.Pool.Enqueue(InstantiateUnityObject<T>(entry.Pool.Peek()));
+            }
         }
         else
         {
@@ -110,42 +117,53 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
-    private static T InstantiateUnityObject<T>()
+    private static T InstantiateUnityObject<T>(object obj = null)
     {
-        System.Type t = typeof(T);
-
-        UnityEngine.Object[] arr = UnityEngine.Resources.LoadAll("", t);
-
-        //Error if we didn't find anything
-        if (arr == null || arr.Length == 0)
+        object toCast;
+        if (obj == null)
         {
-            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+            System.Type t = typeof(T);
+
+            UnityEngine.Object[] arr = UnityEngine.Resources.LoadAll("", t);
+
+            //Error if we didn't find anything
+            if (arr == null || arr.Length == 0)
             {
-                Debug.LogError(ErrorStrings.RESOURCE_NOT_FOUND);
-                return default(T);
+                if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+                {
+                    Debug.LogError(ErrorStrings.RESOURCE_NOT_FOUND);
+                    return default(T);
+                }
+                else
+                {
+                    throw new ObjectPoolException(ErrorStrings.RESOURCE_NOT_FOUND, t);
+                }
             }
-            else
+
+            //Error if we found too much
+            if (arr.Length > 1)
             {
-                throw new ObjectPoolException(ErrorStrings.RESOURCE_NOT_FOUND, t);
+                if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+                {
+                    Debug.LogError(ErrorStrings.OBJECT_TYPE_MUST_BE_UNIQUE);
+                    return default(T);
+                }
+                else
+                {
+                    throw new ObjectPoolException(ErrorStrings.OBJECT_TYPE_MUST_BE_UNIQUE, t);
+                }
             }
+
+            toCast = arr[0];
         }
-
-        //Error if we found too much
-        if (arr.Length > 1)
+        else
         {
-            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
-            {
-                Debug.LogError(ErrorStrings.OBJECT_TYPE_MUST_BE_UNIQUE);
-                return default(T);
-            }
-            else
-            {
-                throw new ObjectPoolException(ErrorStrings.OBJECT_TYPE_MUST_BE_UNIQUE, t);
-            }
+            Debug.Log("I'm called, lol");
+            toCast = Instantiate((UnityEngine.Object)obj);
         }
 
         T ret;
-        if (TryCast<T>(arr[0], out ret))
+        if (TryCast<T>(toCast, out ret))
         {
             return ret;
         }

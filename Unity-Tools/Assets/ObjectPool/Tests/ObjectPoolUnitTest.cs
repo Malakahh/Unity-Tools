@@ -5,7 +5,6 @@ using System.Collections.Generic;
 #if UNITY_EDITOR
 public partial class ObjectPool : MonoBehaviour
 {
-
     public bool RunTestsDuringDevelopment = true;
     bool done = false;
     bool defaultConstructorObject = true,
