@@ -2,9 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 
+#if UNITY_EDITOR
 public partial class ObjectPool : MonoBehaviour
 {
-#if UNITY_EDITOR
 
     public bool RunTestsDuringDevelopment = true;
     bool done = false;
@@ -334,5 +334,5 @@ public partial class ObjectPool : MonoBehaviour
     class ReleaseDerivative2 : TestDataClass { }
     class AsyncImmediateDerivative : TestDataClass { }
 
-#endif
 }
+#endif
