@@ -5,7 +5,7 @@ using System.Collections.Generic;
 #if UNITY_EDITOR
 public partial class ObjectPool : MonoBehaviour
 {
-    public bool RunTestsDuringDevelopment = true;
+    public bool RunTests = true;
     bool done = false;
     bool defaultConstructorObject = true,
         defaultConstructorObjectMany = true,
@@ -33,7 +33,7 @@ public partial class ObjectPool : MonoBehaviour
 
     void Start()
     {
-        if (RunTestsDuringDevelopment)
+        if (RunTests)
         {
             ObjectPool.ErrorLevel = ObjectPool.ObjectPoolErrorLevel.Exceptions;
             Debug.Log("*** Running Object Pool Unit Tests...");
@@ -54,7 +54,7 @@ public partial class ObjectPool : MonoBehaviour
 
     void Update () {
 
-        if (!done && RunTestsDuringDevelopment)
+        if (!done && RunTests)
         {
             if (rotDefaultConstructorObject == null &&
                 rotDefaultConstructorObjectMany == null &&
