@@ -2,21 +2,23 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class ObjectPoolUnitTest : MonoBehaviour
+public partial class ObjectPool : MonoBehaviour
 {
-    bool done = false;
-    bool defaultConstructorObject, 
-        defaultConstructorObjectMany, 
-        thresholdDefaultSuccess1, 
-        thresholdDefaultSuccess2, 
-        thresholdIncreased1, 
-        thresholdIncreased2, 
-        release1, 
-        release2, 
-        gameObjectTest1, 
-        gameObjectTest2;
-
 #if UNITY_EDITOR
+
+    public bool RunTestsDuringDevelopment = true;
+    bool done = false;
+    bool defaultConstructorObject = true,
+        defaultConstructorObjectMany = true,
+        thresholdDefaultSuccess1 = true,
+        thresholdDefaultSuccess2 = true,
+        thresholdIncreased1 = true,
+        thresholdIncreased2 = true,
+        release1 = true,
+        release2 = true,
+        gameObjectTest1 = true,
+        gameObjectTest2 = true,
+        asyncImmediateInstantiation = true;
 
     Coroutine rotDefaultConstructorObject,
         rotDefaultConstructorObjectMany,
@@ -27,28 +29,33 @@ public class ObjectPoolUnitTest : MonoBehaviour
         rotRelease1,
         rotRelease2,
         rotGameObjectTest1,
-        rotGameObjectTest2;
+        rotGameObjectTest2,
+        rotAsyncImmediateInstantiation;
 
-    void Awake()
+    void Start()
     {
-        ObjectPool.ErrorLevel = ObjectPool.ObjectPoolErrorLevel.Exceptions;
-        Debug.Log("*** Running Object Pool Unit Tests...");
+        if (RunTestsDuringDevelopment)
+        {
+            ObjectPool.ErrorLevel = ObjectPool.ObjectPoolErrorLevel.Exceptions;
+            Debug.Log("*** Running Object Pool Unit Tests...");
 
-        rotDefaultConstructorObject = StartCoroutine(DefaultConstructorObject());
-        rotDefaultConstructorObjectMany = StartCoroutine(DefaultConstructorObjectMany());
-        rotThresholdDefaultSuccess1 = StartCoroutine(ThresholdDefaultSuccess1());
-        rotThresholdDefaultSuccess2 = StartCoroutine(ThresholdDefaultSuccess2());
-        rotThresholdIncreased1 = StartCoroutine(ThresholdIncreased1());
-        rotThresholdIncreased2 = StartCoroutine(ThresholdIncreased2());
-        rotRelease1 = StartCoroutine(Release1());
-        rotRelease2 = StartCoroutine(Release2());
-        rotGameObjectTest1 = StartCoroutine(GameObjectTest1());
-        rotGameObjectTest2 = StartCoroutine(GameObjectTest2());
+            rotDefaultConstructorObject = StartCoroutine(DefaultConstructorObject());
+            rotDefaultConstructorObjectMany = StartCoroutine(DefaultConstructorObjectMany());
+            rotThresholdDefaultSuccess1 = StartCoroutine(ThresholdDefaultSuccess1());
+            rotThresholdDefaultSuccess2 = StartCoroutine(ThresholdDefaultSuccess2());
+            rotThresholdIncreased1 = StartCoroutine(ThresholdIncreased1());
+            rotThresholdIncreased2 = StartCoroutine(ThresholdIncreased2());
+            rotRelease1 = StartCoroutine(Release1());
+            rotRelease2 = StartCoroutine(Release2());
+            rotGameObjectTest1 = StartCoroutine(GameObjectTest1());
+            rotGameObjectTest2 = StartCoroutine(GameObjectTest2());
+            rotAsyncImmediateInstantiation = StartCoroutine(AsyncImmediateInstantiation());
+        }
     }
 
     void Update () {
-        
-        if (!done)
+
+        if (!done && RunTestsDuringDevelopment)
         {
             if (rotDefaultConstructorObject == null &&
                 rotDefaultConstructorObjectMany == null &&
@@ -59,7 +66,8 @@ public class ObjectPoolUnitTest : MonoBehaviour
                 rotRelease1 == null &&
                 rotRelease2 == null &&
                 rotGameObjectTest1 == null &&
-                rotGameObjectTest2 == null)
+                rotGameObjectTest2 == null &&
+                rotAsyncImmediateInstantiation == null)
                 {
                     bool res = defaultConstructorObject &&
                     defaultConstructorObjectMany &&
@@ -70,7 +78,8 @@ public class ObjectPoolUnitTest : MonoBehaviour
                     release1 &&
                     release2 &&
                     gameObjectTest1 &&
-                    gameObjectTest2;
+                    gameObjectTest2 &&
+                    asyncImmediateInstantiation;
 
                     if (res)
                     {
@@ -85,7 +94,6 @@ public class ObjectPoolUnitTest : MonoBehaviour
                 }
         }
 	}
-#endif
 
     IEnumerator DefaultConstructorObject()
     {
@@ -264,6 +272,26 @@ public class ObjectPoolUnitTest : MonoBehaviour
         rotGameObjectTest2 = null;
     }
 
+    IEnumerator AsyncImmediateInstantiation()
+    {
+        yield return new WaitForEndOfFrame();
+
+        TestDataClass expected = new TestDataClass(1);
+
+        asyncImmediateInstantiation = true;
+        for (int i = 0; i < 20; i++)
+        {
+            AsyncImmediateDerivative obj = ObjectPool.Acquire<AsyncImmediateDerivative>();
+            if (!obj.CheckEqual(expected))
+            {
+                asyncImmediateInstantiation = false;
+            }
+        }
+
+        Debug.Log("AsyncImmediateInstantiation: " + asyncImmediateInstantiation);
+        rotAsyncImmediateInstantiation = null;
+    }
+
     class TestDataClass
     {
         public int myInt;
@@ -304,4 +332,7 @@ public class ObjectPoolUnitTest : MonoBehaviour
     class ThresholdDerivativeIncreased2 : TestDataClass { }
     class ReleaseDerivative1 : TestDataClass { }
     class ReleaseDerivative2 : TestDataClass { }
+    class AsyncImmediateDerivative : TestDataClass { }
+
+#endif
 }
