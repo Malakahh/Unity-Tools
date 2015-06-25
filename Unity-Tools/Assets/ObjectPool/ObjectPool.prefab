@@ -39,6 +39,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bf6e54c8cea0b249b34b76447a33839, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ErrorLevel: 0
+  DisplayWarnings: 1
+  RunTests: 1
+  StringPoolTestObj: {fileID: 156356, guid: b44c6fedf9f7ec445abfc79068531a1d, type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

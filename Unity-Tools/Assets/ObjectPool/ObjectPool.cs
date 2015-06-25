@@ -6,8 +6,8 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
 {
     public enum ObjectPoolErrorLevel {LogError, Exceptions}
 
-    public static ObjectPoolErrorLevel ErrorLevel = ObjectPoolErrorLevel.LogError;
-    public static bool DisplayWarnings = true;
+    public ObjectPoolErrorLevel ErrorLevel = ObjectPoolErrorLevel.LogError;
+    public bool DisplayWarnings = true;
     
     static Dictionary<System.Type, BaseMetaEntry> genericBasedPools = new Dictionary<System.Type, BaseMetaEntry>();
     static Dictionary<string, MetaEntry<UnityEngine.GameObject>> stringBasedPools = new Dictionary<string, MetaEntry<UnityEngine.GameObject>>();
@@ -132,7 +132,7 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
             //Error if we didn't find anything
             if (arr == null || arr.Length == 0)
             {
-                if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+                if (Instance.ErrorLevel == ObjectPoolErrorLevel.LogError)
                 {
                     Debug.LogError(ErrorStrings.RESOURCE_NOT_FOUND);
                     return default(T);
@@ -146,7 +146,7 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
             //Error if we found too much
             if (arr.Length > 1)
             {
-                if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+                if (Instance.ErrorLevel == ObjectPoolErrorLevel.LogError)
                 {
                     Debug.LogError(ErrorStrings.OBJECT_TYPE_MUST_BE_UNIQUE);
                     return default(T);
@@ -198,7 +198,7 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
 
         if (threshold < 1)
         {
-            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+            if (Instance.ErrorLevel == ObjectPoolErrorLevel.LogError)
             {
                 Debug.LogError(ErrorStrings.THRESHOLD_TOO_LOW);
                 return;
@@ -258,7 +258,7 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
 
         if (!ret)
         {
-            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+            if (Instance.ErrorLevel == ObjectPoolErrorLevel.LogError)
             {
                 Debug.LogError(ErrorStrings.OBJECT_TYPE_NOT_FOUND);
             }
@@ -278,7 +278,7 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
     /// <param name="obj">Object to release</param>
     public static void Release(UnityEngine.GameObject obj)
     {
-        if (DisplayWarnings)
+        if (Instance.DisplayWarnings)
         {
             Debug.LogWarning(ErrorStrings.WARNING_STRING_POOL);
         }
@@ -287,7 +287,7 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
         
         if (tag == null)
         {
-            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+            if (Instance.ErrorLevel == ObjectPoolErrorLevel.LogError)
             {
                 Debug.LogError(ErrorStrings.TAG_MISSING);
                 return;
@@ -299,7 +299,7 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
         }
         else if (!stringBasedPools.ContainsKey(tag.Key))
         {
-            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+            if (Instance.ErrorLevel == ObjectPoolErrorLevel.LogError)
             {
                 Debug.LogError(ErrorStrings.OBJECT_TYPE_NOT_FOUND);
                 return;
@@ -320,14 +320,14 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
     /// <param name="initObj">Object from which all objects in this pool will be cloned</param>
     public static void InitializePool(string key, UnityEngine.GameObject initObj)
     {
-        if (DisplayWarnings)
+        if (Instance.DisplayWarnings)
         {
             Debug.LogWarning(ErrorStrings.WARNING_STRING_POOL);
         }
 
         if (stringBasedPools.ContainsKey(key))
         {
-            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+            if (Instance.ErrorLevel == ObjectPoolErrorLevel.LogError)
             {
                 Debug.LogError(ErrorStrings.OBJECT_STRING_MUST_BE_UNIQUE);
                 return;
@@ -346,14 +346,14 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
 
     public static UnityEngine.GameObject Acquire(string key)
     {
-        if (DisplayWarnings)
+        if (Instance.DisplayWarnings)
         {
             Debug.LogWarning(ErrorStrings.WARNING_STRING_POOL);
         }
 
         if (!stringBasedPools.ContainsKey(key))
         {
-            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+            if (Instance.ErrorLevel == ObjectPoolErrorLevel.LogError)
             {
                 Debug.LogError(ErrorStrings.OBJECT_STRING_NOT_FOUND);
                 return null;
@@ -393,6 +393,9 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
     private static void InstantiateObject(MetaEntry<UnityEngine.GameObject> entry)
     {
         entry.Pool.Enqueue(InstantiateUnityObject<UnityEngine.GameObject>(entry.Pool.Peek()));
+
+        if (entry.LeftToInstantiate > 0)
+            entry.LeftToInstantiate--;
     }
 
     private static IEnumerator AsyncInstantiation(MetaEntry<UnityEngine.GameObject> entry)
@@ -414,14 +417,14 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
     /// <param name="threshold">The new lower threshold.</param>
     public static void SetLowerInstantiationThreshold(string key, int threshold)
     {
-        if (DisplayWarnings)
+        if (Instance.DisplayWarnings)
         {
             Debug.LogWarning(ErrorStrings.WARNING_STRING_POOL);
         }
 
         if (!stringBasedPools.ContainsKey(key))
         {
-            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+            if (Instance.ErrorLevel == ObjectPoolErrorLevel.LogError)
             {
                 Debug.LogError(ErrorStrings.OBJECT_STRING_NOT_FOUND);
                 return;
@@ -434,7 +437,7 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
 
         if (threshold < 1)
         {
-            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+            if (Instance.ErrorLevel == ObjectPoolErrorLevel.LogError)
             {
                 Debug.LogError(ErrorStrings.THRESHOLD_TOO_LOW);
                 return;
@@ -457,7 +460,7 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
     {
         if (!stringBasedPools.ContainsKey(key))
         {
-            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+            if (Instance.ErrorLevel == ObjectPoolErrorLevel.LogError)
             {
                 Debug.LogError(ErrorStrings.OBJECT_STRING_NOT_FOUND);
                 return -1;
@@ -475,7 +478,7 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
     {
         if (!stringBasedPools.ContainsKey(key))
         {
-            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+            if (Instance.ErrorLevel == ObjectPoolErrorLevel.LogError)
             {
                 Debug.LogError(ErrorStrings.OBJECT_STRING_NOT_FOUND);
                 return -1;
