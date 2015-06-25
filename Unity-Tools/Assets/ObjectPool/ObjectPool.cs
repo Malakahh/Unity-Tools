@@ -7,8 +7,10 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
     public enum ObjectPoolErrorLevel {LogError, Exceptions}
 
     public static ObjectPoolErrorLevel ErrorLevel = ObjectPoolErrorLevel.LogError;
+    public static bool DisplayWarnings = true;
     
-    static Dictionary<System.Type, BaseMetaEntry> pools = new Dictionary<System.Type, BaseMetaEntry>();
+    static Dictionary<System.Type, BaseMetaEntry> genericBasedPools = new Dictionary<System.Type, BaseMetaEntry>();
+    static Dictionary<string, MetaEntry<UnityEngine.GameObject>> stringBasedPools = new Dictionary<string, MetaEntry<UnityEngine.GameObject>>();
     static ObjectPool Instance;
 
     void Awake()
@@ -17,6 +19,7 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
             Instance = this;
     }
 
+    #region GenericBased
     /// <summary>
     /// Releases an object back into the pool.
     /// </summary>
@@ -28,7 +31,7 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
 
         if (PoolContainsKey(t))
         {
-            ((MetaEntry<T>)pools[t]).Pool.Enqueue(obj);
+            ((MetaEntry<T>)genericBasedPools[t]).Pool.Enqueue(obj);
         }
     }
 
@@ -43,15 +46,15 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
 
         MetaEntry<T> entry;
 
-        if (!pools.ContainsKey(t)) //Not using PoolContainsKey, as this is first instantiation
+        if (!genericBasedPools.ContainsKey(t)) //Not using PoolContainsKey, as this is first instantiation
         {
             entry = new MetaEntry<T>();
             InstantiateObject<T>(entry);
-            pools.Add(t, entry);
+            genericBasedPools.Add(t, entry);
         }
         else
         {
-            entry = (MetaEntry<T>)pools[t];
+            entry = (MetaEntry<T>)genericBasedPools[t];
         }
         
         //Below threshold, make more instances
@@ -208,7 +211,7 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
 
         if (PoolContainsKey(t))
         {
-            MetaEntry<T> entry = (MetaEntry<T>)pools[t];
+            MetaEntry<T> entry = (MetaEntry<T>)genericBasedPools[t];
             entry.LowerThreshold = threshold;
         }
     }
@@ -224,7 +227,7 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
 
         if (PoolContainsKey(t))
         {
-            MetaEntry<T> entry = (MetaEntry<T>)pools[t];
+            MetaEntry<T> entry = (MetaEntry<T>)genericBasedPools[t];
             return entry.LowerThreshold;
         }
 
@@ -242,7 +245,7 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
 
         if (PoolContainsKey(t))
         {
-            MetaEntry<T> entry = (MetaEntry<T>)pools[t];
+            MetaEntry<T> entry = (MetaEntry<T>)genericBasedPools[t];
             return entry.InstanceCountTotal;
         }
 
@@ -251,7 +254,7 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
 
     private static bool PoolContainsKey(System.Type t)
     {
-        bool ret = pools.ContainsKey(t);
+        bool ret = genericBasedPools.ContainsKey(t);
 
         if (!ret)
         {
@@ -267,6 +270,225 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
 
         return ret;
     }
+    #endregion
+    #region StringBasedGO
+    /// <summary>
+    /// Releases a GameObject back to its string based pool
+    /// </summary>
+    /// <param name="obj">Object to release</param>
+    public static void Release(UnityEngine.GameObject obj)
+    {
+        if (DisplayWarnings)
+        {
+            Debug.LogWarning(ErrorStrings.WARNING_STRING_POOL);
+        }
+
+        ObjectPoolEarTag tag = obj.GetComponent<ObjectPoolEarTag>();
+        
+        if (tag == null)
+        {
+            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+            {
+                Debug.LogError(ErrorStrings.TAG_MISSING);
+                return;
+            }
+            else
+            {
+                throw new ObjectPoolException(ErrorStrings.TAG_MISSING, "");
+            }
+        }
+        else if (!stringBasedPools.ContainsKey(tag.Key))
+        {
+            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+            {
+                Debug.LogError(ErrorStrings.OBJECT_TYPE_NOT_FOUND);
+                return;
+            }
+            else
+            {
+                throw new ObjectPoolException(ErrorStrings.OBJECT_TYPE_NOT_FOUND, tag.Key);
+            }
+        }
+
+        stringBasedPools[tag.Key].Pool.Enqueue(obj);
+    }
+
+    /// <summary>
+    /// Initializes a pool for stringbased pooling
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="initObj">Object from which all objects in this pool will be cloned</param>
+    public static void InitializePool(string key, UnityEngine.GameObject initObj)
+    {
+        if (DisplayWarnings)
+        {
+            Debug.LogWarning(ErrorStrings.WARNING_STRING_POOL);
+        }
+
+        if (stringBasedPools.ContainsKey(key))
+        {
+            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+            {
+                Debug.LogError(ErrorStrings.OBJECT_STRING_MUST_BE_UNIQUE);
+                return;
+            }
+            else
+            {
+                throw new ObjectPoolException(ErrorStrings.OBJECT_STRING_MUST_BE_UNIQUE, key);
+            }
+        }
+
+        initObj.AddComponent<ObjectPoolEarTag>().Key = key;
+        MetaEntry<UnityEngine.GameObject> entry = new MetaEntry<UnityEngine.GameObject>();
+        entry.Pool.Enqueue(initObj);
+        stringBasedPools.Add(key, entry);
+    }
+
+    public static UnityEngine.GameObject Acquire(string key)
+    {
+        if (DisplayWarnings)
+        {
+            Debug.LogWarning(ErrorStrings.WARNING_STRING_POOL);
+        }
+
+        if (!stringBasedPools.ContainsKey(key))
+        {
+            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+            {
+                Debug.LogError(ErrorStrings.OBJECT_STRING_NOT_FOUND);
+                return null;
+            }
+            else
+            {
+                throw new ObjectPoolException(ErrorStrings.OBJECT_STRING_NOT_FOUND, key);
+            }
+        }
+
+        MetaEntry<UnityEngine.GameObject> entry = stringBasedPools[key];
+
+        //Below threshold, make more instances
+        if (entry.Pool.Count <= entry.LowerThreshold)
+        {
+            //Instantiate asunc if we aren't already
+            if (entry.asyncInst == null)
+            {
+                //Double the number of entries
+                entry.LeftToInstantiate = entry.InstanceCountTotal;
+                entry.InstanceCountTotal *= 2;
+
+                //Start async instantiation
+                entry.asyncInst = Instance.StartCoroutine(AsyncInstantiation(entry));
+            }
+
+            //We need an instance immediatly, otherwise we will run out
+            if (entry.Pool.Count <= 1)
+            {
+                InstantiateObject(entry);
+            }
+        }
+
+        return entry.Pool.Dequeue();
+    }
+
+    private static void InstantiateObject(MetaEntry<UnityEngine.GameObject> entry)
+    {
+        entry.Pool.Enqueue(InstantiateUnityObject<UnityEngine.GameObject>(entry.Pool.Peek()));
+    }
+
+    private static IEnumerator AsyncInstantiation(MetaEntry<UnityEngine.GameObject> entry)
+    {
+        while (entry.LeftToInstantiate > 0)
+        {
+            InstantiateObject(entry);
+
+            yield return new UnityEngine.WaitForEndOfFrame();
+        }
+
+        entry.asyncInst = null;
+    }
+
+    /// <summary>
+    /// Sets the lower threshold for when instantiation of new stringbased objects should begin. Defaults to 1. If things are spawned often, i.e. bullets, you want to set this higher.
+    /// </summary>
+    /// <param name="key">Key of pools threshold to set.</param>
+    /// <param name="threshold">The new lower threshold.</param>
+    public static void SetLowerInstantiationThreshold(string key, int threshold)
+    {
+        if (DisplayWarnings)
+        {
+            Debug.LogWarning(ErrorStrings.WARNING_STRING_POOL);
+        }
+
+        if (!stringBasedPools.ContainsKey(key))
+        {
+            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+            {
+                Debug.LogError(ErrorStrings.OBJECT_STRING_NOT_FOUND);
+                return;
+            }
+            else
+            {
+                throw new ObjectPoolException(ErrorStrings.OBJECT_STRING_NOT_FOUND, key);
+            }
+        }
+
+        if (threshold < 1)
+        {
+            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+            {
+                Debug.LogError(ErrorStrings.THRESHOLD_TOO_LOW);
+                return;
+            }
+            else
+            {
+                throw new ObjectPoolException(ErrorStrings.THRESHOLD_TOO_LOW, key);
+            }
+        }
+
+        stringBasedPools[key].LowerThreshold = threshold;
+    }
+
+    /// <summary>
+    /// Gets the lower theshold for when instantiation of new stringbased objects should begin. Defaults to 1.
+    /// </summary>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    public static int GetLowerInstantiationThreshold(string key)
+    {
+        if (!stringBasedPools.ContainsKey(key))
+        {
+            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+            {
+                Debug.LogError(ErrorStrings.OBJECT_STRING_NOT_FOUND);
+                return -1;
+            }
+            else
+            {
+                throw new ObjectPoolException(ErrorStrings.OBJECT_STRING_NOT_FOUND, key);
+            }
+        }
+
+        return stringBasedPools[key].LowerThreshold;
+    }
+
+    public static int GetInstanceCountTotal(string key)
+    {
+        if (!stringBasedPools.ContainsKey(key))
+        {
+            if (ErrorLevel == ObjectPoolErrorLevel.LogError)
+            {
+                Debug.LogError(ErrorStrings.OBJECT_STRING_NOT_FOUND);
+                return -1;
+            }
+            else
+            {
+                throw new ObjectPoolException(ErrorStrings.OBJECT_STRING_NOT_FOUND, key);
+            }
+        }
+
+        return stringBasedPools[key].InstanceCountTotal;
+    }
+    #endregion
 
     abstract class BaseMetaEntry {};
     class MetaEntry<T> : BaseMetaEntry
@@ -281,10 +503,16 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
     public class ObjectPoolException : System.Exception
     {
         public System.Type TypeUsed;
+        public string KeyUsed;
 
         public ObjectPoolException(string msg, System.Type t) : base(msg)
         {
             TypeUsed = t;
+        }
+
+        public ObjectPoolException(string msg, string key) : base(msg)
+        {
+            KeyUsed = key;
         }
     }
 
@@ -295,5 +523,9 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
         public const string OBJECT_TYPE_MUST_BE_UNIQUE = OBJECT_POOL_ERROR + ": Object type must be unique.";
         public const string RESOURCE_NOT_FOUND = OBJECT_POOL_ERROR + ": Resource not found.";
         public const string THRESHOLD_TOO_LOW = OBJECT_POOL_ERROR + ": Threshold must be >= 1";
+        public const string TAG_MISSING = OBJECT_POOL_ERROR + ": Missing tag. Was this object acquired through the objectpool?";
+        public const string WARNING_STRING_POOL = "Object Pool WARNING: Using the string-based object pool is more expensive than the type-based object pool.";
+        public const string OBJECT_STRING_MUST_BE_UNIQUE = OBJECT_POOL_ERROR + ": Key string must be unique.";
+        public const string OBJECT_STRING_NOT_FOUND = OBJECT_POOL_ERROR + ": No pool found for key string.";
     }
 }

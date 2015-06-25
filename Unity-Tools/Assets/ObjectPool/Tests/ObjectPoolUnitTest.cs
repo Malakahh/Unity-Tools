@@ -6,6 +6,8 @@ using System.Collections.Generic;
 public partial class ObjectPool : MonoBehaviour
 {
     public bool RunTests = true;
+    public GameObject StringPoolTestObj;
+
     bool done = false;
     bool defaultConstructorObject = true,
         defaultConstructorObjectMany = true,
@@ -17,7 +19,8 @@ public partial class ObjectPool : MonoBehaviour
         release2 = true,
         gameObjectTest1 = true,
         gameObjectTest2 = true,
-        asyncImmediateInstantiation = true;
+        asyncImmediateInstantiation = true,
+        stringBasedPoolGO = true;
 
     Coroutine rotDefaultConstructorObject,
         rotDefaultConstructorObjectMany,
@@ -29,7 +32,8 @@ public partial class ObjectPool : MonoBehaviour
         rotRelease2,
         rotGameObjectTest1,
         rotGameObjectTest2,
-        rotAsyncImmediateInstantiation;
+        rotAsyncImmediateInstantiation,
+        rotStringBasedPoolGO;
 
     void Start()
     {
@@ -49,6 +53,7 @@ public partial class ObjectPool : MonoBehaviour
             rotGameObjectTest1 = StartCoroutine(GameObjectTest1());
             rotGameObjectTest2 = StartCoroutine(GameObjectTest2());
             rotAsyncImmediateInstantiation = StartCoroutine(AsyncImmediateInstantiation());
+            rotStringBasedPoolGO = StartCoroutine(StringBasedPoolGO());
         }
     }
 
@@ -66,7 +71,8 @@ public partial class ObjectPool : MonoBehaviour
                 rotRelease2 == null &&
                 rotGameObjectTest1 == null &&
                 rotGameObjectTest2 == null &&
-                rotAsyncImmediateInstantiation == null)
+                rotAsyncImmediateInstantiation == null &&
+                rotStringBasedPoolGO == null)
                 {
                     bool res = defaultConstructorObject &&
                     defaultConstructorObjectMany &&
@@ -78,7 +84,8 @@ public partial class ObjectPool : MonoBehaviour
                     release2 &&
                     gameObjectTest1 &&
                     gameObjectTest2 &&
-                    asyncImmediateInstantiation;
+                    asyncImmediateInstantiation &&
+                    stringBasedPoolGO;
 
                     if (res)
                     {
@@ -291,6 +298,38 @@ public partial class ObjectPool : MonoBehaviour
         rotAsyncImmediateInstantiation = null;
     }
 
+    IEnumerator StringBasedPoolGO()
+    {
+        yield return new WaitForEndOfFrame();
+
+        //Instantiate pool and acquire an object
+        string key = "TestData";
+        ObjectPool.InitializePool(key, StringPoolTestObj);
+        GameObject obj = ObjectPool.Acquire(key);
+        ObjectPoolEarTag tag = obj.GetComponent<ObjectPoolEarTag>();
+
+        if (tag == null)
+        {
+            stringBasedPoolGO = false;
+        }
+        else if (tag.Key != key)
+        {
+            stringBasedPoolGO = false;
+        }
+
+        //Release the object
+        int expected = 2;
+        ObjectPool.Release(obj);
+
+        if (ObjectPool.GetInstanceCountTotal(key) != expected)
+        {
+            stringBasedPoolGO = false;
+        }
+
+        Debug.Log("StringBasedPoolGO: " + stringBasedPoolGO);
+        rotStringBasedPoolGO = null;
+    }
+
     class TestDataClass
     {
         public int myInt;
@@ -332,6 +371,5 @@ public partial class ObjectPool : MonoBehaviour
     class ReleaseDerivative1 : TestDataClass { }
     class ReleaseDerivative2 : TestDataClass { }
     class AsyncImmediateDerivative : TestDataClass { }
-
 }
 #endif

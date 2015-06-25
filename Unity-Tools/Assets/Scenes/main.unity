@@ -416,6 +416,10 @@ Prefab:
       propertyPath: RunTestsDuringDevelopment
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 11431244, guid: 1754ab11b6bba19418ab5e4468548628, type: 2}
+      propertyPath: StringPoolTestObj
+      value: 
+      objectReference: {fileID: 156356, guid: b44c6fedf9f7ec445abfc79068531a1d, type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 1754ab11b6bba19418ab5e4468548628, type: 2}
   m_IsPrefabParent: 0
