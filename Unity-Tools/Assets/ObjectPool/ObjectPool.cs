@@ -87,11 +87,12 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
         {
             if (entry.Pool.Count == 0)
             {
-                entry.Pool.Enqueue(InstantiateUnityObject<T>());
+                entry.Original = InstantiateUnityObject<T>() as UnityEngine.Object;
+                entry.Pool.Enqueue(InstantiateUnityObject<T>(entry.Original));
             }
             else
             {
-                entry.Pool.Enqueue(InstantiateUnityObject<T>(entry.Pool.Peek()));
+                entry.Pool.Enqueue(InstantiateUnityObject<T>(entry.Original));
             }
         }
         else
@@ -340,7 +341,8 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
 
         initObj.AddComponent<ObjectPoolEarTag>().Key = key;
         MetaEntry<UnityEngine.GameObject> entry = new MetaEntry<UnityEngine.GameObject>();
-        entry.Pool.Enqueue(initObj);
+        entry.Original = initObj;
+        InstantiateObject(entry);
         stringBasedPools.Add(key, entry);
     }
 
@@ -392,7 +394,7 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
 
     private static void InstantiateObject(MetaEntry<UnityEngine.GameObject> entry)
     {
-        entry.Pool.Enqueue(InstantiateUnityObject<UnityEngine.GameObject>(entry.Pool.Peek()));
+        entry.Pool.Enqueue(InstantiateUnityObject<UnityEngine.GameObject>(entry.Original));
 
         if (entry.LeftToInstantiate > 0)
             entry.LeftToInstantiate--;
@@ -501,6 +503,29 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
         public int LowerThreshold = 1;
         public int LeftToInstantiate = 0;
         public UnityEngine.Coroutine asyncInst;
+        private UnityEngine.Object _original;
+
+        public UnityEngine.Object Original
+        {
+            get 
+            { 
+                return _original; 
+            }
+            set 
+            { 
+                _original = value;
+                System.Reflection.PropertyInfo pInfo = _original.GetType().GetProperty("gameObject");
+                if (pInfo != null)
+                {
+                    UnityEngine.GameObject gameObjOriginal = (UnityEngine.GameObject)pInfo.GetValue(_original, null);
+
+                    if (gameObjOriginal != null)
+                    {
+                        gameObjOriginal.SetActive(false);
+                    }
+                }
+            }
+        }
     }
 
     public class ObjectPoolException : System.Exception
