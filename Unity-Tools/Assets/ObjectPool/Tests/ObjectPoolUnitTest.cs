@@ -1,9 +1,10 @@
 ﻿using UnityEngine;
+using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
 
 #if UNITY_EDITOR
-public partial class ObjectPool : MonoBehaviour
+public class ObjectPoolUnitTest : MonoBehaviour
 {
     public bool RunTests = true;
     public GameObject StringPoolTestObj;
@@ -39,21 +40,21 @@ public partial class ObjectPool : MonoBehaviour
     {
         if (RunTests)
         {
-            ObjectPool.Instance.ErrorLevel = ObjectPool.ObjectPoolErrorLevel.Exceptions;
+            ObjectPool.ErrorLevel = ObjectPool.ObjectPoolErrorLevel.Exceptions;
             Debug.Log("*** Running Object Pool Unit Tests...");
 
-            rotDefaultConstructorObject = StartCoroutine(DefaultConstructorObject());
-            rotDefaultConstructorObjectMany = StartCoroutine(DefaultConstructorObjectMany());
-            rotThresholdDefaultSuccess1 = StartCoroutine(ThresholdDefaultSuccess1());
-            rotThresholdDefaultSuccess2 = StartCoroutine(ThresholdDefaultSuccess2());
-            rotThresholdIncreased1 = StartCoroutine(ThresholdIncreased1());
-            rotThresholdIncreased2 = StartCoroutine(ThresholdIncreased2());
-            rotRelease1 = StartCoroutine(Release1());
-            rotRelease2 = StartCoroutine(Release2());
-            rotGameObjectTest1 = StartCoroutine(GameObjectTest1());
-            rotGameObjectTest2 = StartCoroutine(GameObjectTest2());
-            rotAsyncImmediateInstantiation = StartCoroutine(AsyncImmediateInstantiation());
-            rotStringBasedPoolGO = StartCoroutine(StringBasedPoolGO());
+            rotDefaultConstructorObject = CoroutineHandler.StartCoroutine(DefaultConstructorObject());
+            rotDefaultConstructorObjectMany = CoroutineHandler.StartCoroutine(DefaultConstructorObjectMany());
+            rotThresholdDefaultSuccess1 = CoroutineHandler.StartCoroutine(ThresholdDefaultSuccess1());
+            rotThresholdDefaultSuccess2 = CoroutineHandler.StartCoroutine(ThresholdDefaultSuccess2());
+            rotThresholdIncreased1 = CoroutineHandler.StartCoroutine(ThresholdIncreased1());
+            rotThresholdIncreased2 = CoroutineHandler.StartCoroutine(ThresholdIncreased2());
+            rotRelease1 = CoroutineHandler.StartCoroutine(Release1());
+            rotRelease2 = CoroutineHandler.StartCoroutine(Release2());
+            rotGameObjectTest1 = CoroutineHandler.StartCoroutine(GameObjectTest1());
+            rotGameObjectTest2 = CoroutineHandler.StartCoroutine(GameObjectTest2());
+            rotAsyncImmediateInstantiation = CoroutineHandler.StartCoroutine(AsyncImmediateInstantiation());
+            rotStringBasedPoolGO = CoroutineHandler.StartCoroutine(StringBasedPoolGO());
         }
     }
 
@@ -372,4 +373,28 @@ public partial class ObjectPool : MonoBehaviour
     class ReleaseDerivative2 : TestDataClass { }
     class AsyncImmediateDerivative : TestDataClass { }
 }
+
+/*
+public class ObjectPoolUnitTestEditorWindow : EditorWindow
+{
+    string str;
+    bool groupEnabled;
+
+    [MenuItem("Window/My Window")]
+    public static void ShowWindow()
+    {
+        EditorWindow.GetWindow(typeof(ObjectPoolUnitTestEditorWindow));
+    }
+
+    void OnGUI()
+    {
+        GUILayout.Label("Base Settings", EditorStyles.boldLabel);
+        str = EditorGUILayout.TextField("Test Field", str);
+        groupEnabled = EditorGUILayout.BeginToggleGroup("Optional setting, yay", groupEnabled);
+
+        EditorGUILayout.EndToggleGroup();
+
+    }
+}*/
+
 #endif
