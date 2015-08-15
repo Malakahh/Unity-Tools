@@ -152,6 +152,7 @@ public class ObjectPool
                 }
             }
 
+
             toCast = arr[0];
         }
         else
@@ -162,6 +163,12 @@ public class ObjectPool
         T ret;
         if (TryCast<T>(toCast, out ret))
         {
+            UnityEngine.Object uObj;
+            if (TryCast<UnityEngine.Object>(ret, out uObj))
+            {
+                UnityEngine.GameObject.DontDestroyOnLoad(uObj);
+            }
+
             return ret;
         }
         else
