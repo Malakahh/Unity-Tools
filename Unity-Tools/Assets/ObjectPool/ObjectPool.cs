@@ -2,16 +2,22 @@
 using System.Collections.Generic;
 using Debug = UnityEngine.Debug;
 
-public class ObjectPool
+public partial class ObjectPool : UnityEngine.MonoBehaviour
 {
     public enum ObjectPoolErrorLevel {LogError, Exceptions}
 
-    public static ObjectPoolErrorLevel ErrorLevel = ObjectPoolErrorLevel.LogError;
-    public static bool DisplayWarnings = true;
+    public static ObjectPool Instance;
+
+    public ObjectPoolErrorLevel ErrorLevel = ObjectPoolErrorLevel.LogError;
+    public bool DisplayWarnings = true;
     
-    static Dictionary<System.Type, BaseMetaEntry> genericBasedPools = new Dictionary<System.Type, BaseMetaEntry>();
-    static Dictionary<string, MetaEntry<UnityEngine.GameObject>> stringBasedPools = new Dictionary<string, MetaEntry<UnityEngine.GameObject>>();
-    static ObjectPool Instance;
+    Dictionary<System.Type, BaseMetaEntry> genericBasedPools = new Dictionary<System.Type, BaseMetaEntry>();
+    Dictionary<string, MetaEntry<UnityEngine.GameObject>> stringBasedPools = new Dictionary<string, MetaEntry<UnityEngine.GameObject>>();
+
+    void Awake()
+    {
+        Instance = this;
+    }
 
     #region GenericBased
     /// <summary>
@@ -19,7 +25,7 @@ public class ObjectPool
     /// </summary>
     /// <typeparam name="T">Object type to release</typeparam>
     /// <param name="obj">Object to release</param>
-    public static void Release<T>(T obj)
+    public void Release<T>(T obj)
     {
         System.Type t = typeof(T);
 
@@ -34,7 +40,7 @@ public class ObjectPool
     /// </summary>
     /// <typeparam name="T">Type of object to acquire</typeparam>
     /// <returns>Acquired object</returns>
-    public static T Acquire<T>() where T : new()
+    public T Acquire<T>() where T : new()
     {
         System.Type t = typeof(T);
 
@@ -75,7 +81,7 @@ public class ObjectPool
         return entry.Pool.Dequeue();
     }
 
-    private static void InstantiateObject<T>(MetaEntry<T> entry) where T : new()
+    private void InstantiateObject<T>(MetaEntry<T> entry) where T : new()
     {
         if (typeof(T).IsSubclassOf(typeof(UnityEngine.Object)))
         {
@@ -98,7 +104,7 @@ public class ObjectPool
             entry.LeftToInstantiate--;
     }
 
-    private static IEnumerator AsyncInstantiation<T>(MetaEntry<T> entry) where T : new()
+    private IEnumerator AsyncInstantiation<T>(MetaEntry<T> entry) where T : new()
     {
         while (entry.LeftToInstantiate > 0)
         {
@@ -115,7 +121,7 @@ public class ObjectPool
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
-    private static T InstantiateUnityObject<T>(object obj = null)
+    private T InstantiateUnityObject<T>(object obj = null)
     {
         object toCast;
         if (obj == null)
@@ -163,12 +169,6 @@ public class ObjectPool
         T ret;
         if (TryCast<T>(toCast, out ret))
         {
-            UnityEngine.Object uObj;
-            if (TryCast<UnityEngine.Object>(ret, out uObj))
-            {
-                UnityEngine.GameObject.DontDestroyOnLoad(uObj);
-            }
-
             return ret;
         }
         else
@@ -177,7 +177,7 @@ public class ObjectPool
         }
     }
 
-    private static bool TryCast<T>(object obj, out T result)
+    private bool TryCast<T>(object obj, out T result)
     {
         if (obj is T)
         {
@@ -194,7 +194,7 @@ public class ObjectPool
     /// </summary>
     /// <typeparam name="T">Object type to set threshold for</typeparam>
     /// <param name="threshold">The new lower threshold</param>
-    public static void SetLowerInstantiationThreshold<T>(int threshold)
+    public void SetLowerInstantiationThreshold<T>(int threshold)
     {
         System.Type t = typeof(T);
 
@@ -223,7 +223,7 @@ public class ObjectPool
     /// </summary>
     /// <typeparam name="T">Object type to get threshold for</typeparam>
     /// <returns>The lower threshold, or -1 on fail</returns>
-    public static int GetLowerInstatiationThreshold<T>()
+    public int GetLowerInstatiationThreshold<T>()
     {
         System.Type t = typeof(T);
 
@@ -241,7 +241,7 @@ public class ObjectPool
     /// </summary>
     /// <typeparam name="T">Object type</typeparam>
     /// <returns>Instance count</returns>
-    public static int GetInstanceCountTotal<T>()
+    public int GetInstanceCountTotal<T>()
     {
         System.Type t = typeof(T);
 
@@ -254,7 +254,7 @@ public class ObjectPool
         return -1;
     }
 
-    private static bool PoolContainsKey(System.Type t)
+    private bool PoolContainsKey(System.Type t)
     {
         bool ret = genericBasedPools.ContainsKey(t);
 
@@ -278,7 +278,7 @@ public class ObjectPool
     /// Releases a GameObject back to its string based pool
     /// </summary>
     /// <param name="obj">Object to release</param>
-    public static void Release(UnityEngine.GameObject obj)
+    public void Release(UnityEngine.GameObject obj)
     {
         if (DisplayWarnings)
         {
@@ -320,7 +320,7 @@ public class ObjectPool
     /// </summary>
     /// <param name="key"></param>
     /// <param name="initObj">Object from which all objects in this pool will be cloned</param>
-    public static void InitializePool(string key, UnityEngine.GameObject initObj)
+    public void InitializePool(string key, UnityEngine.GameObject initObj)
     {
         if (DisplayWarnings)
         {
@@ -347,7 +347,7 @@ public class ObjectPool
         stringBasedPools.Add(key, entry);
     }
 
-    public static UnityEngine.GameObject Acquire(string key)
+    public UnityEngine.GameObject Acquire(string key)
     {
         if (DisplayWarnings)
         {
@@ -380,7 +380,7 @@ public class ObjectPool
                 entry.InstanceCountTotal *= 2;
 
                 //Start async instantiation
-                entry.asyncInst = CoroutineHandler.StartCoroutine(AsyncInstantiation(entry));
+                entry.asyncInst = StartCoroutine(AsyncInstantiation(entry));
             }
 
             //We need an instance immediatly, otherwise we will run out
@@ -393,7 +393,7 @@ public class ObjectPool
         return entry.Pool.Dequeue();
     }
 
-    private static void InstantiateObject(MetaEntry<UnityEngine.GameObject> entry)
+    private void InstantiateObject(MetaEntry<UnityEngine.GameObject> entry)
     {
         entry.Pool.Enqueue(InstantiateUnityObject<UnityEngine.GameObject>(entry.Original));
 
@@ -401,7 +401,7 @@ public class ObjectPool
             entry.LeftToInstantiate--;
     }
 
-    private static IEnumerator AsyncInstantiation(MetaEntry<UnityEngine.GameObject> entry)
+    private IEnumerator AsyncInstantiation(MetaEntry<UnityEngine.GameObject> entry)
     {
         while (entry.LeftToInstantiate > 0)
         {
@@ -418,7 +418,7 @@ public class ObjectPool
     /// </summary>
     /// <param name="key">Key of pools threshold to set.</param>
     /// <param name="threshold">The new lower threshold.</param>
-    public static void SetLowerInstantiationThreshold(string key, int threshold)
+    public void SetLowerInstantiationThreshold(string key, int threshold)
     {
         if (DisplayWarnings)
         {
@@ -459,7 +459,7 @@ public class ObjectPool
     /// </summary>
     /// <param name="key"></param>
     /// <returns></returns>
-    public static int GetLowerInstantiationThreshold(string key)
+    public int GetLowerInstantiationThreshold(string key)
     {
         if (!stringBasedPools.ContainsKey(key))
         {
@@ -477,7 +477,7 @@ public class ObjectPool
         return stringBasedPools[key].LowerThreshold;
     }
 
-    public static int GetInstanceCountTotal(string key)
+    public int GetInstanceCountTotal(string key)
     {
         if (!stringBasedPools.ContainsKey(key))
         {
