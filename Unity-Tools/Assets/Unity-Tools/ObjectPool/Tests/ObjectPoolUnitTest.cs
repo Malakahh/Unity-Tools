@@ -43,18 +43,18 @@ public partial class ObjectPool : MonoBehaviour
             ObjectPool.Instance.ErrorLevel = ObjectPool.ObjectPoolErrorLevel.Exceptions;
             Debug.Log("*** Running Object Pool Unit Tests...");
 
-            rotDefaultConstructorObject = CoroutineHandler.StartCoroutine(DefaultConstructorObject());
-            rotDefaultConstructorObjectMany = CoroutineHandler.StartCoroutine(DefaultConstructorObjectMany());
-            rotThresholdDefaultSuccess1 = CoroutineHandler.StartCoroutine(ThresholdDefaultSuccess1());
-            rotThresholdDefaultSuccess2 = CoroutineHandler.StartCoroutine(ThresholdDefaultSuccess2());
-            rotThresholdIncreased1 = CoroutineHandler.StartCoroutine(ThresholdIncreased1());
-            rotThresholdIncreased2 = CoroutineHandler.StartCoroutine(ThresholdIncreased2());
-            rotRelease1 = CoroutineHandler.StartCoroutine(Release1());
-            rotRelease2 = CoroutineHandler.StartCoroutine(Release2());
-            rotGameObjectTest1 = CoroutineHandler.StartCoroutine(GameObjectTest1());
-            rotGameObjectTest2 = CoroutineHandler.StartCoroutine(GameObjectTest2());
-            rotAsyncImmediateInstantiation = CoroutineHandler.StartCoroutine(AsyncImmediateInstantiation());
-            rotStringBasedPoolGO = CoroutineHandler.StartCoroutine(StringBasedPoolGO());
+            rotDefaultConstructorObject = StartCoroutine(DefaultConstructorObject());
+            rotDefaultConstructorObjectMany = StartCoroutine(DefaultConstructorObjectMany());
+            rotThresholdDefaultSuccess1 = StartCoroutine(ThresholdDefaultSuccess1());
+            rotThresholdDefaultSuccess2 = StartCoroutine(ThresholdDefaultSuccess2());
+            rotThresholdIncreased1 = StartCoroutine(ThresholdIncreased1());
+            rotThresholdIncreased2 = StartCoroutine(ThresholdIncreased2());
+            rotRelease1 = StartCoroutine(Release1());
+            rotRelease2 = StartCoroutine(Release2());
+            rotGameObjectTest1 = StartCoroutine(GameObjectTest1());
+            rotGameObjectTest2 = StartCoroutine(GameObjectTest2());
+            rotAsyncImmediateInstantiation = StartCoroutine(AsyncImmediateInstantiation());
+            rotStringBasedPoolGO = StartCoroutine(StringBasedPoolGO());
         }
     }
 

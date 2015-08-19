@@ -68,7 +68,7 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
                 entry.InstanceCountTotal *= 2;
 
                 //Start async instantiation
-                entry.asyncInst = CoroutineHandler.StartCoroutine(AsyncInstantiation<T>(entry));
+                entry.asyncInst = StartCoroutine(AsyncInstantiation<T>(entry));
             }
 
             //We need an instance immediatly, otherwise we will run out
