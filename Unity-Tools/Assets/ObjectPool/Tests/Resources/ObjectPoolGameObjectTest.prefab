@@ -26,6 +26,9 @@ GameObject:
   - 114: {fileID: 11456318}
   - 114: {fileID: 11495204}
   - 114: {fileID: 11458854}
+  - 114: {fileID: 11459906}
+  - 114: {fileID: 11494138}
+  - 114: {fileID: 11406760}
   m_Layer: 0
   m_Name: ObjectPoolGameObjectTest
   m_TagString: Untagged
@@ -45,6 +48,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
+--- !u!114 &11406760
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 156356}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f2a1484c673a2744814b584a939a642, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Key: TestData
 --- !u!114 &11418688
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -212,6 +227,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Key: TestData
+--- !u!114 &11459906
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 156356}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f2a1484c673a2744814b584a939a642, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Key: TestData
 --- !u!114 &11466104
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -237,6 +264,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Key: TestData
 --- !u!114 &11480274
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 156356}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f2a1484c673a2744814b584a939a642, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Key: TestData
+--- !u!114 &11494138
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
