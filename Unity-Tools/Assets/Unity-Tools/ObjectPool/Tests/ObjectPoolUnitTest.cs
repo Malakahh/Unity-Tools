@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
-using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using Debug = UnityEngine.Debug;
 
 #if UNITY_EDITOR
 public partial class ObjectPool : MonoBehaviour
@@ -55,6 +56,8 @@ public partial class ObjectPool : MonoBehaviour
             rotGameObjectTest2 = StartCoroutine(GameObjectTest2());
             rotAsyncImmediateInstantiation = StartCoroutine(AsyncImmediateInstantiation());
             rotStringBasedPoolGO = StartCoroutine(StringBasedPoolGO());
+
+            PerformanceTest();
         }
     }
 
@@ -331,6 +334,62 @@ public partial class ObjectPool : MonoBehaviour
         rotStringBasedPoolGO = null;
     }
 
+    void PerformanceTest()
+    {
+        ObjectPoolGameObjectTestScript reference = ObjectPool.Instance.Acquire<ObjectPoolGameObjectTestScript>();
+
+        Stopwatch without = new Stopwatch();
+        Stopwatch generic = new Stopwatch();
+        Stopwatch stringbased = new Stopwatch();
+
+        int num = 10000;
+
+        //Without the use of an object pool
+        without.Start();
+        for (int i = 0; i < num; i++)
+        {
+            GameObject go = GameObject.Instantiate<GameObject>(reference.gameObject);
+
+            if (i % 2 == 0)
+            {
+                GameObject.Destroy(go);
+            }
+        }
+        without.Stop();
+
+        //Generic object pool
+        generic.Start();
+        for (int i = 0; i < num; i++)
+        {
+            ObjectPoolGameObjectTestScript t = ObjectPool.Instance.Acquire<ObjectPoolGameObjectTestScript>();
+
+            if (i % 2 == 0)
+            {
+                ObjectPool.Instance.Release<ObjectPoolGameObjectTestScript>(t);
+            }
+        }
+        generic.Stop();
+
+        //Stringbased object pool
+        stringbased.Start();
+        string key = "PerformanceTest";
+        ObjectPool.Instance.InitializePool(key, StringPoolTestObj);
+        for (int i = 0; i < num; i++)
+        {
+            GameObject go = ObjectPool.Instance.Acquire(key);
+
+            if (i % 2 == 0)
+            {
+                ObjectPool.Instance.Release(go);
+            }
+        }
+        stringbased.Stop();
+
+        Debug.Log("Performance - Without: " + without.Elapsed);
+        Debug.Log("Performance - Generic: " + generic.Elapsed);
+        Debug.Log("Performance - Stringbased: " + stringbased.Elapsed);
+    }
+
     class TestDataClass
     {
         public int myInt;
@@ -372,29 +431,9 @@ public partial class ObjectPool : MonoBehaviour
     class ReleaseDerivative1 : TestDataClass { }
     class ReleaseDerivative2 : TestDataClass { }
     class AsyncImmediateDerivative : TestDataClass { }
+    class PerformanceDerivative1 : TestDataClass { }
+    class PerformanceDerivative2 : TestDataClass { }
+    class PerformanceDerivative3 : TestDataClass { }
 }
-
-/*
-public class ObjectPoolUnitTestEditorWindow : EditorWindow
-{
-    string str;
-    bool groupEnabled;
-
-    [MenuItem("Window/My Window")]
-    public static void ShowWindow()
-    {
-        EditorWindow.GetWindow(typeof(ObjectPoolUnitTestEditorWindow));
-    }
-
-    void OnGUI()
-    {
-        GUILayout.Label("Base Settings", EditorStyles.boldLabel);
-        str = EditorGUILayout.TextField("Test Field", str);
-        groupEnabled = EditorGUILayout.BeginToggleGroup("Optional setting, yay", groupEnabled);
-
-        EditorGUILayout.EndToggleGroup();
-
-    }
-}*/
 
 #endif

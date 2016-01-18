@@ -340,9 +340,10 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
             }
         }
 
-        initObj.AddComponent<ObjectPoolEarTag>().Key = key;
+        UnityEngine.GameObject GO = UnityEngine.GameObject.Instantiate(initObj);
+        GO.AddComponent<ObjectPoolEarTag>().Key = key;
         MetaEntry<UnityEngine.GameObject> entry = new MetaEntry<UnityEngine.GameObject>();
-        entry.Original = initObj;
+        entry.Original = GO;
         InstantiateObject(entry);
         stringBasedPools.Add(key, entry);
     }
