@@ -22,4 +22,9 @@ public static class ExtensionMethods {
     {
         return System.Enum.GetName(e.GetType(), e);
     }
+
+    public static void DoSomething()
+    {
+
+    }
 }
