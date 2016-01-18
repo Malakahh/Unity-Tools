@@ -8,7 +8,6 @@ using Debug = UnityEngine.Debug;
 public partial class ObjectPool : MonoBehaviour
 {
     public bool RunTests = true;
-    public GameObject StringPoolTestObj;
 
     bool done = false;
     bool defaultConstructorObject = true,
@@ -21,8 +20,7 @@ public partial class ObjectPool : MonoBehaviour
         release2 = true,
         gameObjectTest1 = true,
         gameObjectTest2 = true,
-        asyncImmediateInstantiation = true,
-        stringBasedPoolGO = true;
+        asyncImmediateInstantiation = true;
 
     Coroutine rotDefaultConstructorObject,
         rotDefaultConstructorObjectMany,
@@ -34,8 +32,7 @@ public partial class ObjectPool : MonoBehaviour
         rotRelease2,
         rotGameObjectTest1,
         rotGameObjectTest2,
-        rotAsyncImmediateInstantiation,
-        rotStringBasedPoolGO;
+        rotAsyncImmediateInstantiation;
 
     void Start()
     {
@@ -55,7 +52,6 @@ public partial class ObjectPool : MonoBehaviour
             rotGameObjectTest1 = StartCoroutine(GameObjectTest1());
             rotGameObjectTest2 = StartCoroutine(GameObjectTest2());
             rotAsyncImmediateInstantiation = StartCoroutine(AsyncImmediateInstantiation());
-            rotStringBasedPoolGO = StartCoroutine(StringBasedPoolGO());
 
             PerformanceTest();
         }
@@ -75,8 +71,7 @@ public partial class ObjectPool : MonoBehaviour
                 rotRelease2 == null &&
                 rotGameObjectTest1 == null &&
                 rotGameObjectTest2 == null &&
-                rotAsyncImmediateInstantiation == null &&
-                rotStringBasedPoolGO == null)
+                rotAsyncImmediateInstantiation == null)
                 {
                     bool res = defaultConstructorObject &&
                     defaultConstructorObjectMany &&
@@ -88,8 +83,7 @@ public partial class ObjectPool : MonoBehaviour
                     release2 &&
                     gameObjectTest1 &&
                     gameObjectTest2 &&
-                    asyncImmediateInstantiation &&
-                    stringBasedPoolGO;
+                    asyncImmediateInstantiation;
 
                     if (res)
                     {
@@ -302,45 +296,12 @@ public partial class ObjectPool : MonoBehaviour
         rotAsyncImmediateInstantiation = null;
     }
 
-    IEnumerator StringBasedPoolGO()
-    {
-        yield return new WaitForEndOfFrame();
-
-        //Instantiate pool and acquire an object
-        string key = "TestData";
-        ObjectPool.Instance.InitializePool(key, StringPoolTestObj);
-        GameObject obj = ObjectPool.Instance.Acquire(key);
-        ObjectPoolEarTag tag = obj.GetComponent<ObjectPoolEarTag>();
-
-        if (tag == null)
-        {
-            stringBasedPoolGO = false;
-        }
-        else if (tag.Key != key)
-        {
-            stringBasedPoolGO = false;
-        }
-
-        //Release the object
-        int expected = 2;
-        ObjectPool.Instance.Release(obj);
-
-        if (ObjectPool.Instance.GetInstanceCountTotal(key) != expected)
-        {
-            stringBasedPoolGO = false;
-        }
-
-        Debug.Log("StringBasedPoolGO: " + stringBasedPoolGO);
-        rotStringBasedPoolGO = null;
-    }
-
     void PerformanceTest()
     {
         ObjectPoolGameObjectTestScript reference = ObjectPool.Instance.Acquire<ObjectPoolGameObjectTestScript>();
 
         Stopwatch without = new Stopwatch();
         Stopwatch generic = new Stopwatch();
-        Stopwatch stringbased = new Stopwatch();
 
         int num = 10000;
 
@@ -370,24 +331,8 @@ public partial class ObjectPool : MonoBehaviour
         }
         generic.Stop();
 
-        //Stringbased object pool
-        stringbased.Start();
-        string key = "PerformanceTest";
-        ObjectPool.Instance.InitializePool(key, StringPoolTestObj);
-        for (int i = 0; i < num; i++)
-        {
-            GameObject go = ObjectPool.Instance.Acquire(key);
-
-            if (i % 2 == 0)
-            {
-                ObjectPool.Instance.Release(go);
-            }
-        }
-        stringbased.Stop();
-
-        Debug.Log("Performance - Without: " + without.Elapsed);
-        Debug.Log("Performance - Generic: " + generic.Elapsed);
-        Debug.Log("Performance - Stringbased: " + stringbased.Elapsed);
+        Debug.Log("Performance, " + num + " entities - Without: " + without.Elapsed);
+        Debug.Log("Performance, " + num + " entities - Generic: " + generic.Elapsed);
     }
 
     class TestDataClass
