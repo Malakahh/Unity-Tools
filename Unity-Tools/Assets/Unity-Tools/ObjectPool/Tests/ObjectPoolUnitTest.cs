@@ -333,7 +333,6 @@ public partial class ObjectPool : MonoBehaviour
 
         Debug.Log("Performance, " + num + " entities - Without: " + without.Elapsed);
         Debug.Log("Performance, " + num + " entities - Generic: " + generic.Elapsed);
-
     }
 
     class TestDataClass

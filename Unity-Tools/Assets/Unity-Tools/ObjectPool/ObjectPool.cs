@@ -16,6 +16,12 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
     void Awake()
     {
         Instance = this;
+        DontDestroyOnLoad(Instance);
+    }
+
+    void OnLevelWasLoaded(int level)
+    {
+        genericBasedPools.Clear();
     }
 
     /// <summary>
