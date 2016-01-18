@@ -331,8 +331,8 @@ public partial class ObjectPool : MonoBehaviour
         }
         generic.Stop();
 
-        Debug.Log("Performance - Without: " + without.Elapsed);
-        Debug.Log("Performance - Generic: " + generic.Elapsed);
+        Debug.Log("Performance, " + num + " entities - Without: " + without.Elapsed);
+        Debug.Log("Performance, " + num + " entities - Generic: " + generic.Elapsed);
 
     }
 
