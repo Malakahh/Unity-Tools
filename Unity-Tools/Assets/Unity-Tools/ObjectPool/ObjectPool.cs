@@ -12,7 +12,6 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
     public bool DisplayWarnings = true;
     
     Dictionary<System.Type, BaseMetaEntry> genericBasedPools = new Dictionary<System.Type, BaseMetaEntry>();
-    Dictionary<string, MetaEntry<UnityEngine.GameObject>> stringBasedPools = new Dictionary<string, MetaEntry<UnityEngine.GameObject>>();
 
     void Awake()
     {
@@ -328,9 +327,5 @@ public partial class ObjectPool : UnityEngine.MonoBehaviour
         public const string OBJECT_TYPE_MUST_BE_UNIQUE = OBJECT_POOL_ERROR + ": Object type must be unique.";
         public const string RESOURCE_NOT_FOUND = OBJECT_POOL_ERROR + ": Resource not found.";
         public const string THRESHOLD_TOO_LOW = OBJECT_POOL_ERROR + ": Threshold must be >= 1";
-        public const string TAG_MISSING = OBJECT_POOL_ERROR + ": Missing tag. Was this object acquired through the objectpool?";
-        public const string WARNING_STRING_POOL = "Object Pool WARNING: Using the string-based object pool is more expensive than the type-based object pool.";
-        public const string OBJECT_STRING_MUST_BE_UNIQUE = OBJECT_POOL_ERROR + ": Key string must be unique.";
-        public const string OBJECT_STRING_NOT_FOUND = OBJECT_POOL_ERROR + ": No pool found for key string.";
     }
 }
